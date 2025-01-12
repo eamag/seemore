@@ -1,0 +1,14 @@
+[project]
+name = "seemore"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "lightning[pytorch-extra]>=2.5.0.post0",
+    "pandas>=2.2.3",
+    "pillow>=11.1.0",
+    "torch>=2.5.1",
+    "torchaudio>=2.5.1",
+    "torchvision>=0.20.1",
+]
