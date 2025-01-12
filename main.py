@@ -1,7 +1,7 @@
 from modules.lightning_model import LitVisionLanguageModel
 from modules.datamodule import VLMDataModule
 from argparse import ArgumentParser
-import os
+from lightning.pytorch.loggers import MLFlowLogger
 import lightning as L
 from pathlib import Path
 
@@ -40,9 +40,11 @@ parser.add_argument("--learning_rate", type=float, default=1e-3)
 
 
 if __name__ == "__main__":
-    stoi, encode, decode, vocab_size = preprocess_txt()
     args = parser.parse_args()
 
+    mlf_logger = MLFlowLogger(experiment_name="lightning_logs", tracking_uri="file:./mlruns")
+
+    stoi, encode, decode, vocab_size = preprocess_txt()
     model = LitVisionLanguageModel(
         vocab_size=vocab_size,
         image_embed_dim=args.image_embed_dim,
@@ -56,5 +58,6 @@ if __name__ == "__main__":
         learning_rate=args.learning_rate,
     )
     dm = VLMDataModule(encode, stoi)
-    trainer = L.Trainer()
+    trainer = L.Trainer(logger=mlf_logger, log_every_n_steps=1)
+    mlf_logger.log_hyperparams(args)
     trainer.fit(model, dm)

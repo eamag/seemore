@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "lightning[pytorch-extra]>=2.5.0.post0",
+    "mlflow>=2.19.0",
     "pandas>=2.2.3",
     "pillow>=11.1.0",
     "torch>=2.5.1",

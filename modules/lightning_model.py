@@ -36,6 +36,8 @@ class LitVisionLanguageModel(L.LightningModule):
     def training_step(self, batch, batch_idx):
         images, idx, targets = batch
         logits, loss = self.model(images, idx, targets)
+        mlf_logger = self.logger
+        mlf_logger.log_metrics({"train_loss": loss})
         return loss
 
     def configure_optimizers(self) -> torch.optim.Optimizer:
