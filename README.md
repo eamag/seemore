@@ -1,4 +1,4 @@
-- [x] Configuring hyperparameters through CLI (e.g. using a yaml/json)
+- [x] Configuring hyperparameters through CLI (e.g. using a yaml/json) [I like makefiles]
 - [x] A simple solution (can be any free library or service) for hyperparameter management and tracking
 - [x] Storing and visualizing the training loss
 - [x] A simple solution for profiling the training performance to identify bottlenecks in the model configuration
@@ -7,6 +7,8 @@
 
 
 Run with `uv run main.py`
+
+Or with `make experiment1` and keep track of experiments there (makes it easier later with artefacts, names etc)
 
 See metrics at `uv run mlflow ui`
 
