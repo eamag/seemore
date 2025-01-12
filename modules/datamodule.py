@@ -96,12 +96,16 @@ class VLMDataModule(LightningDataModule):
     """
 
     def __init__(
-        self, encode_fn, stoi, input_path: str = "../images/inputs.csv"
+        self,
+        encode_fn,
+        stoi,
+        input_path: str = "../images/inputs.csv",
+        batch_size: int = 32,
     ) -> None:
         super().__init__()
         self.input_path = input_path
         self.img_size = 96
-        self.batch_size = 32
+        self.batch_size = batch_size
         self.val_batch_size = 8
         self.num_workers = 4
         self.encode_fn = encode_fn

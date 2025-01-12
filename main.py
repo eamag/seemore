@@ -4,6 +4,8 @@ from argparse import ArgumentParser
 from lightning.pytorch.loggers import MLFlowLogger
 import lightning as L
 from pathlib import Path
+from lightning.pytorch.callbacks import DeviceStatsMonitor
+from lightning.pytorch.tuner import Tuner
 
 
 def preprocess_txt():
@@ -37,12 +39,16 @@ parser.add_argument("--num_blks", type=int, default=3)
 parser.add_argument("--emb_dropout", type=float, default=0.1)
 parser.add_argument("--blk_dropout", type=float, default=0.1)
 parser.add_argument("--learning_rate", type=float, default=1e-3)
+parser.add_argument("--max_epochs", type=int, default=5)
+parser.add_argument("--tune", action="store_true", help="Flag to enable tuning")
 
-
+# In the main block
 if __name__ == "__main__":
     args = parser.parse_args()
 
-    mlf_logger = MLFlowLogger(experiment_name="lightning_logs", tracking_uri="file:./mlruns")
+    mlf_logger = MLFlowLogger(
+        experiment_name="lightning_logs", tracking_uri="file:./mlruns"
+    )
 
     stoi, encode, decode, vocab_size = preprocess_txt()
     model = LitVisionLanguageModel(
@@ -58,6 +64,18 @@ if __name__ == "__main__":
         learning_rate=args.learning_rate,
     )
     dm = VLMDataModule(encode, stoi)
-    trainer = L.Trainer(logger=mlf_logger, log_every_n_steps=1)
+    trainer = L.Trainer(
+        logger=mlf_logger,
+        log_every_n_steps=1,
+        profiler="advanced",
+        max_epochs=args.max_epochs,
+        callbacks=[DeviceStatsMonitor()],
+        # precision="bf16-mixed",
+    )
+
+    if args.tune:
+        tuner = Tuner(trainer)
+        tuner.scale_batch_size(model, datamodule=dm, mode="binsearch")
+
     mlf_logger.log_hyperparams(args)
     trainer.fit(model, dm)
