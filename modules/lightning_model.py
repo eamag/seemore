@@ -40,5 +40,12 @@ class LitVisionLanguageModel(L.LightningModule):
         mlf_logger.log_metrics({"train_loss": loss})
         return loss
 
+    def validation_step(self, batch, batch_idx):
+        images, idx, targets = batch
+        logits, loss = self.model(images, idx, targets)
+        mlf_logger = self.logger
+        mlf_logger.log_metrics({"val_loss": loss})
+        return loss
+    
     def configure_optimizers(self) -> torch.optim.Optimizer:
         return torch.optim.Adam(self.parameters(), lr=self.learning_rate)

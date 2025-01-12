@@ -5,7 +5,7 @@ import pandas as pd
 from PIL import Image
 import torch
 import torchvision.transforms as transforms
-
+import deepspeed
 from .vision_language_model import VisionLanguageModel
 
 current_dir = os.path.dirname(__file__)
@@ -115,21 +115,19 @@ def get_batch(df, batch_size, split="train", img_size=96, val_batch_size=8):
     return images, padded_text, targets
 
 
-def train_model(model, df, epochs, vocab_size, img_size=96):
-    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-    model.to(device)
+def train_model(model, df, epochs, vocab_size, optimizer, img_size=96, ):
     for epoch in range(epochs):
         model.train()
         for _ in range(max_iters):
             images, idx, targets = get_batch(df, batch_size, "train", img_size)
             optimizer.zero_grad()
             logits, loss = model(images, idx, targets)
-            loss.backward()
-            optimizer.step()
+            model.backward(loss)
+            model.step()
             if _ % eval_interval == 0:
                 print(f"Loss at iteration {_}: {loss.item()}")
-        val_loss = estimate_loss(model, df, "val", img_size, val_batch_size=8)
-        print(f"Validation Loss after epoch {epoch}: {val_loss}")
+        # val_loss = estimate_loss(model, df, "val", img_size, val_batch_size=8)
+        # print(f"Validation Loss after epoch {epoch}: {val_loss}")
 
 
 def estimate_loss(model, df, split, img_size=96, val_batch_size=8):
@@ -144,7 +142,7 @@ def estimate_loss(model, df, split, img_size=96, val_batch_size=8):
     return sum(losses) / len(losses)
 
 
-def main():
+def main(cmd_args):
     input_path = "../images/inputs.csv"
     filename = os.path.join(current_dir, input_path)
     df = pd.read_csv(filename)
@@ -162,14 +160,21 @@ def main():
         emb_dropout,
         blk_dropout,
     )
-    model.to(device)
+    
+    model_engine, optimizer, _, _ = deepspeed.initialize(args=cmd_args,
+                                                     model=model,
+                                                     model_parameters=model.parameters)
 
     dummy_img = torch.randn(1, 3, img_size, img_size).to(device)
     dummy_idx = torch.randint(0, vocab_size, (1, block_size)).to(device)
     model(dummy_img, dummy_idx)
-
-    train_model(model, df, epochs, vocab_size, img_size)
+    deepspeed.init_distributed()
+    train_model(model_engine, df, epochs, vocab_size, optimizer, img_size, )
 
 
 if __name__ == "__main__":
-    main()
+    from argparse import ArgumentParser
+    parser = ArgumentParser()
+    args = parser.parse_args()
+
+    main(args)

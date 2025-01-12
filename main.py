@@ -6,6 +6,7 @@ import lightning as L
 from pathlib import Path
 from lightning.pytorch.callbacks import DeviceStatsMonitor
 from lightning.pytorch.tuner import Tuner
+from lightning.pytorch.strategies import DeepSpeedStrategy, DDPStrategy
 
 
 def preprocess_txt():
@@ -64,6 +65,11 @@ if __name__ == "__main__":
         learning_rate=args.learning_rate,
     )
     dm = VLMDataModule(encode, stoi)
+
+    # strategy = DeepSpeedStrategy(
+    #     stage=1
+    # )
+    strategy = DDPStrategy(static_graph=True)
     trainer = L.Trainer(
         logger=mlf_logger,
         log_every_n_steps=1,
@@ -71,6 +77,9 @@ if __name__ == "__main__":
         max_epochs=args.max_epochs,
         callbacks=[DeviceStatsMonitor()],
         # precision="bf16-mixed",
+        strategy=strategy,
+        accelerator="cpu",
+        devices=2,
     )
 
     if args.tune:

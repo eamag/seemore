@@ -5,6 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    "deepspeed>=0.16.2",
     "lightning[pytorch-extra]>=2.5.0.post0",
     "mlflow>=2.19.0",
     "pandas>=2.2.3",
